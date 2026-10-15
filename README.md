@@ -65,7 +65,7 @@ function onFrame(video: HTMLVideoElement) {
 }
 ```
 
-A complete page is in [`examples/browser/index.html`](examples/browser/index.html). Run `npm install` (which builds `dist/`), serve the repo folder with any static server, and open `/examples/browser/`.
+A complete page is in [`examples/browser/index.html`](examples/browser/index.html). Run `npm install` (which builds `dist/`), serve the repo folder with any static server, and open `/examples/browser/`. It draws the skeleton over the video (green joints are visible enough to count, orange ones aren't) and shows each leg joint's visibility and the live knee angles, so you can see why a rep did or didn't count. With a laptop webcam, stand about 2.5-3 m back so your ankles are in frame.
 
 ### Keypoints from anywhere else
 

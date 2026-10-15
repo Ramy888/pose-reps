@@ -8,7 +8,11 @@
     :root { color-scheme: dark; --ground: #0a0b10; --text: #f4f5f7; --muted: #a3a8b8; --accent: #c8ff3d; --cue: #ffb547; }
     body { margin: 0; padding: 16px; background: var(--ground); color: var(--text); font: 16px/1.4 system-ui, sans-serif; }
     main { max-width: 720px; margin: 0 auto; display: grid; gap: 12px; }
-    video { width: 100%; border-radius: 12px; transform: scaleX(-1); background: #14161f; }
+    .stage { position: relative; }
+    video, canvas { width: 100%; border-radius: 12px; transform: scaleX(-1); }
+    video { background: #14161f; display: block; }
+    canvas { position: absolute; inset: 0; height: 100%; }
+    .diag { font: 13px/1.5 ui-monospace, monospace; color: var(--muted); }
     .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .count { font-size: 64px; font-weight: 800; color: var(--accent); }
     .cue { color: var(--cue); min-height: 1.4em; }
@@ -30,11 +34,40 @@
   </div>
   <div class="row"><span class="count" id="count">0</span><span class="muted" id="metric"></span></div>
   <div class="cue" id="cue"></div>
-  <video id="video" playsinline muted></video>
+  <div class="diag" id="diag"></div>
+  <div class="stage"><video id="video" playsinline muted></video><canvas id="overlay"></canvas></div>
 </main>
 <script type="module">
   import {PoseLandmarker, FilesetResolver} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
-  import {CUE_TEXT, EXERCISES, createDetector, fromLandmarks} from "../../dist/index.js";
+  import {CUE_TEXT, EXERCISES, J, LEGS, MIN_VISIBILITY, createDetector, fromLandmarks, kneeAngles} from "../../dist/index.js";
+
+  const BONES = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28]];
+  const LEG_NAMES = {[J.leftHip]: "L hip", [J.rightHip]: "R hip", [J.leftKnee]: "L knee", [J.rightKnee]: "R knee", [J.leftAnkle]: "L ankle", [J.rightAnkle]: "R ankle"};
+
+  // Skeleton over the video: green joints are visible enough to count on, orange ones aren't.
+  function draw(canvas, kp) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!kp) return;
+    const at = (p) => [p[0] * canvas.width, p[1] * canvas.height];
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(244,245,247,0.7)";
+    for (const [a, b] of BONES) {
+      ctx.beginPath(); ctx.moveTo(...at(kp[a])); ctx.lineTo(...at(kp[b])); ctx.stroke();
+    }
+    for (const i of [11, 12, 13, 14, 15, 16, ...LEGS]) {
+      ctx.fillStyle = kp[i][2] >= MIN_VISIBILITY ? "#c8ff3d" : "#ffb547";
+      ctx.beginPath(); ctx.arc(...at(kp[i]), 7, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Why a rep did or didn't count: each leg joint's visibility and the live knee angles.
+  function diagnose(kp) {
+    if (!kp) return "No person detected.";
+    const vis = LEGS.map((i) => `${LEG_NAMES[i]} ${kp[i][2].toFixed(2)}${kp[i][2] >= MIN_VISIBILITY ? "" : " ✗"}`).join(" · ");
+    const [l, r] = kneeAngles(kp).map(Math.round);
+    return `Leg visibility (needs ${MIN_VISIBILITY}): ${vis}<br>Knee angles: left ${l}°, right ${r}°`;
+  }
 
   const $ = (id) => document.getElementById(id);
   let detector = createDetector($("exercise").value);
@@ -58,17 +91,29 @@
     video.srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}});
     await video.play();
 
+    const canvas = $("overlay");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
     const loop = () => {
       const now = performance.now();
       const result = landmarker.detectForVideo(video, now);
       const pose = result.landmarks[0];
-      if (pose) {
-        const u = detector.update(fromLandmarks(pose), now);
+      const kp = pose ? fromLandmarks(pose) : null;
+      draw(canvas, kp);
+      $("diag").innerHTML = diagnose(kp);
+      if (kp) {
+        const u = detector.update(kp, now);
+        // The last ~20 s of frames, for debugging: window.trace in the console.
+        const trace = (window.trace ??= []);
+        trace.push({t: Math.round(now), minLegVis: +Math.min(...LEGS.map((i) => kp[i][2])).toFixed(2), knees: kneeAngles(kp).map(Math.round), metric: u.metric, reps: u.reps, cue: u.cue});
+        if (trace.length > 600) trace.shift();
         $("count").textContent = String(u.reps);
         const def = EXERCISES.find((e) => e.id === $("exercise").value);
-        $("metric").textContent = u.metric == null ? "" : `${def.metricLabel}: ${u.metric}`;
+        $("metric").textContent = u.metric == null ? "" : `${def.metricLabel}: ${u.metric}°`;
+        // A cue stays up until the problem is gone: the body is back in frame, or a rep counts.
         if (u.cue) $("cue").textContent = CUE_TEXT[u.cue];
-        if (u.rep) $("cue").textContent = "";
+        else if (u.rep || (u.metric != null && $("cue").textContent === CUE_TEXT["step-back"])) $("cue").textContent = "";
       }
       requestAnimationFrame(loop);
     };
