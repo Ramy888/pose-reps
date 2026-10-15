@@ -20,6 +20,7 @@
     "test": "node --test \"test/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "example": "node examples/node/simulate.ts",
+    "record-demo": "npm run build && node scripts/record-demo.mjs",
     "prepare": "npm run build"
   },
   "keywords": [

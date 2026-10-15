@@ -2,6 +2,10 @@
 
 **Count exercise reps and coach form from MediaPipe pose keypoints.** Squats, lunges and jumping jacks out of the box, or any exercise that bends a joint to a target angle and back. Zero dependencies, about 300 lines of TypeScript, and it runs anywhere JavaScript does: the browser, Node, or React Native.
 
+![A stick figure does two deep squats (counted), a half squat (not counted, "Go deeper"), and a third deep squat](docs/demo.gif)
+
+<sub>The real squat detector, driven by synthetic keypoints from [`examples/browser/simulate.html`](examples/browser/simulate.html). Two deep squats count, the half squat gets "Go deeper" instead of a rep, and the last one counts.</sub>
+
 ```ts
 import {createDetector, fromLandmarks, CUE_TEXT} from 'pose-reps';
 
@@ -28,11 +32,11 @@ A rep counter is easy until real people use it. Bodies wobble, people do half re
 
 ## Install
 
-Until it's published to npm, install from GitHub:
-
 ```sh
-npm install github:Ramy888/pose-reps
+npm install pose-reps
 ```
+
+Or straight from GitHub: `npm install github:Ramy888/pose-reps`.
 
 ## Usage
 
@@ -137,6 +141,7 @@ The thresholds in `EXERCISES` are the ones Spotter ships with, tuned on real squ
 npm install      # also builds dist/
 npm test         # node --test, no extra test runner
 npm run example  # a squat detector on synthetic keypoints
+npm run record-demo  # re-records docs/demo.gif (needs Chrome and ffmpeg)
 ```
 
 Node 22.18 or newer runs the TypeScript sources and tests directly.
