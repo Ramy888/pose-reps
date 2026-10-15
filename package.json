@@ -1,0 +1,48 @@
+{
+  "name": "pose-reps",
+  "version": "0.1.0",
+  "description": "Count exercise reps and cue form from MediaPipe pose keypoints. Squats, lunges, jumping jacks, or your own angle-based exercise. Zero dependencies.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "example": "node examples/node/simulate.ts",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mediapipe",
+    "pose",
+    "pose-estimation",
+    "rep-counter",
+    "fitness",
+    "exercise",
+    "squat",
+    "workout",
+    "computer-vision"
+  ],
+  "author": "Ramy Magdy",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ramy888/pose-reps.git"
+  },
+  "engines": {
+    "node": ">=22.6"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3"
+  }
+}

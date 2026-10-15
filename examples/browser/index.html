@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pose-reps demo</title>
+  <style>
+    :root { color-scheme: dark; --ground: #0a0b10; --text: #f4f5f7; --muted: #a3a8b8; --accent: #c8ff3d; --cue: #ffb547; }
+    body { margin: 0; padding: 16px; background: var(--ground); color: var(--text); font: 16px/1.4 system-ui, sans-serif; }
+    main { max-width: 720px; margin: 0 auto; display: grid; gap: 12px; }
+    video { width: 100%; border-radius: 12px; transform: scaleX(-1); background: #14161f; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .count { font-size: 64px; font-weight: 800; color: var(--accent); }
+    .cue { color: var(--cue); min-height: 1.4em; }
+    .muted { color: var(--muted); }
+    button, select { font: inherit; padding: 8px 14px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>pose-reps demo</h1>
+  <p class="muted">Stand back so your whole body is in frame. Video stays in this browser tab.</p>
+  <div class="row">
+    <select id="exercise">
+      <option value="squat">Squats</option>
+      <option value="lunge">Lunges</option>
+      <option value="jumping-jack">Jumping jacks</option>
+    </select>
+    <button id="start">Start camera</button>
+  </div>
+  <div class="row"><span class="count" id="count">0</span><span class="muted" id="metric"></span></div>
+  <div class="cue" id="cue"></div>
+  <video id="video" playsinline muted></video>
+</main>
+<script type="module">
+  import {PoseLandmarker, FilesetResolver} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+  import {CUE_TEXT, EXERCISES, createDetector, fromLandmarks} from "../../dist/index.js";
+
+  const $ = (id) => document.getElementById(id);
+  let detector = createDetector($("exercise").value);
+  $("exercise").onchange = () => {
+    detector = createDetector($("exercise").value);
+    $("count").textContent = "0";
+  };
+
+  $("start").onclick = async () => {
+    $("start").disabled = true;
+    const files = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    const landmarker = await PoseLandmarker.createFromOptions(files, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+        delegate: "GPU",
+      },
+      runningMode: "VIDEO",
+      numPoses: 1,
+    });
+    const video = $("video");
+    video.srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}});
+    await video.play();
+
+    const loop = () => {
+      const now = performance.now();
+      const result = landmarker.detectForVideo(video, now);
+      const pose = result.landmarks[0];
+      if (pose) {
+        const u = detector.update(fromLandmarks(pose), now);
+        $("count").textContent = String(u.reps);
+        const def = EXERCISES.find((e) => e.id === $("exercise").value);
+        $("metric").textContent = u.metric == null ? "" : `${def.metricLabel}: ${u.metric}`;
+        if (u.cue) $("cue").textContent = CUE_TEXT[u.cue];
+        if (u.rep) $("cue").textContent = "";
+      }
+      requestAnimationFrame(loop);
+    };
+    loop();
+  };
+</script>
+</body>
+</html>
