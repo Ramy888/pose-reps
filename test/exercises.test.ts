@@ -152,9 +152,9 @@ describe('jumping jacks', () => {
 
 describe('custom exercises', () => {
   // A bicep curl: the elbow closes from straight (~180°) to under 60° and opens again.
-  // The detector only needs the legs visible, which the test body always has.
-  const curl = () =>
+  const curl = (requiredJoints?: number[]) =>
     new AngleRepDetector({
+      requiredJoints,
       measure: (kp) => angle(kp[J.rightShoulder], kp[J.rightElbow], kp[J.rightWrist]),
       downAngle: 60,
       upAngle: 150,
@@ -172,6 +172,15 @@ describe('custom exercises', () => {
 
   it('counts a full curl with a custom measure', () => {
     assert.deepEqual(run(curl(), rep(arm, 1)), {reps: 1, cues: []});
+  });
+
+  it('counts curls with the legs out of frame when only the arm is required', () => {
+    const noLegs = (closed: number) =>
+      arm(closed).map((p, i) => (i >= J.leftHip ? ([p[0], p[1], 0.1] as Point) : p));
+    const armOnly = [J.rightShoulder, J.rightElbow, J.rightWrist];
+    assert.deepEqual(run(curl(armOnly), rep(noLegs, 1)), {reps: 1, cues: []});
+    // With the default (legs required), the same frames only ask the player to step back.
+    assert.deepEqual(run(curl(), rep(noLegs, 1)), {reps: 0, cues: ['step-back']});
   });
 
   it('cues "deeper" for a half curl', () => {

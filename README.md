@@ -91,10 +91,11 @@ const curls = new AngleRepDetector({
   dipAngle: 120,  // closing past this but not past downAngle is a half rep: "deeper"
   minRepMs: 600,  // faster than this is jitter, not a rep
   slowRepMs: 800, // faster than this counts, but cues "slower"
+  requiredJoints: [J.rightShoulder, J.rightElbow, J.rightWrist], // default: both legs
 });
 ```
 
-Note that `AngleRepDetector` checks that the **legs** are visible before measuring anything (that's what squats and lunges need). For an upper-body exercise, keep the full body in frame.
+`requiredJoints` lists the landmarks that must be visible before the detector measures anything. It defaults to both legs (what squats and lunges need). For an upper-body exercise, list the arm, so the legs can be out of frame.
 
 ## API
 
@@ -103,7 +104,7 @@ Note that `AngleRepDetector` checks that the **legs** are visible before measuri
 | `createDetector(id)` | A fresh detector for `'squat'`, `'lunge'` or `'jumping-jack'`. Detectors hold the rep count, so keep one per player and set. |
 | `EXERCISES` | The three built-in exercises, with display names, units, metric labels and depth targets. |
 | `detector.update(kp, ms)` | Feed one frame. Returns `{reps, rep, cue, metric}`. `rep` and `cue` are set only on the frame they happen. `metric` is the smoothed angle (or the foot spread for jumping jacks), or `null` when the body isn't visible. |
-| `AngleRepDetector` | The engine behind squats and lunges, configurable for any angle-based exercise. |
+| `AngleRepDetector` | The engine behind squats and lunges, configurable for any angle-based exercise: thresholds, timing, and which joints must be visible. |
 | `JumpingJackDetector` | Hands up and feet wide, then hands down and feet together, counts one rep. |
 | `fromLandmarks(landmarks)` | Converts MediaPipe `{x, y, visibility}` landmarks to `[x, y, visibility]`. |
 | `angle(a, b, c)`, `kneeAngles(kp)` | Joint angles in degrees: 180 is straight, smaller is more bent. |
@@ -138,7 +139,7 @@ npm test         # node --test, no extra test runner
 npm run example  # a squat detector on synthetic keypoints
 ```
 
-Node 22.6 or newer runs the TypeScript sources and tests directly.
+Node 22.18 or newer runs the TypeScript sources and tests directly.
 
 ## License
 

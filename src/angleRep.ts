@@ -3,13 +3,15 @@ import {LEGS, type Point, visible} from './pose.ts';
 import type {Cue, Exercise, ExerciseUpdate, RepRecord} from './types.ts';
 
 export type AngleRepConfig = {
-  // Angle to track for this frame; legs are already known to be visible.
+  // Angle to track for this frame; the required joints are already known to be visible.
   measure: (kp: readonly Point[]) => number;
   downAngle: number; // must go below this for the rep to count
   upAngle: number; // must come back above this to finish the rep
   dipAngle: number; // going below this but not below downAngle is a half rep: cue "deeper"
   minRepMs: number; // faster than this isn't a real rep (jitter, bounce)
   slowRepMs: number; // faster than this counts, but cues "slower"
+  // Joints that must be visible before the angle is measured. Defaults to both legs.
+  requiredJoints?: readonly number[];
 };
 
 const SMOOTHING = 0.35; // EMA factor for the tracked angle
@@ -31,7 +33,7 @@ export class AngleRepDetector implements Exercise {
   }
 
   update(kp: readonly Point[], t: number): ExerciseUpdate {
-    if (!visible(kp, LEGS)) {
+    if (!visible(kp, this.config.requiredJoints ?? LEGS)) {
       this.smooth = null;
       this.phase = 'up';
       const cue: Cue | null = this.hidden ? null : 'step-back';
