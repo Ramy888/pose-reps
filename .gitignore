@@ -8,3 +8,7 @@ dist/
 CLAUDE.md
 AGENTS.md
 .vscode/
+
+# local env (Cloudflare account id for wrangler) and the staged demo site
+.env
+.demo/

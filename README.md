@@ -18,7 +18,9 @@ u.cue && CUE_TEXT[u.cue]; // "Go deeper"
 u.rep;                    // {durationMs: 1840, depth: 92}, on the frame a rep completes
 ```
 
-It was extracted from [Spotter](https://www.amazon.com/dp/B0HLY8788C), an AI form coach for Fire TV, where it counts reps live from a phone's camera.
+**[Try the live demo](https://pose-reps.ramy-comm.workers.dev)** with your webcam, or watch [simulated squats](https://pose-reps.ramy-comm.workers.dev/examples/browser/simulate.html) go through the real detector.
+
+It was extracted from [Spotter](https://github.com/Ramy888/spotter-tv) ([on the Amazon Appstore](https://www.amazon.com/dp/B0HLY8788C)), an AI form coach for Fire TV built for the Amazon "Build, Ship, Shape" Developer Hackathon, where it counts reps live from a phone's camera. pose-reps is Spotter's entry for the hackathon's Open Source mini challenge.
 
 ## Why
 
@@ -69,7 +71,7 @@ function onFrame(video: HTMLVideoElement) {
 }
 ```
 
-A complete page is in [`examples/browser/index.html`](examples/browser/index.html). Run `npm install` (which builds `dist/`), serve the repo folder with any static server, and open `/examples/browser/`. It draws the skeleton over the video (green joints are visible enough to count, orange ones aren't) and shows each leg joint's visibility and the live knee angles, so you can see why a rep did or didn't count. With a laptop webcam, stand about 2.5-3 m back so your ankles are in frame.
+A complete page is in [`examples/browser/index.html`](examples/browser/index.html). It's live at [pose-reps.ramy-comm.workers.dev](https://pose-reps.ramy-comm.workers.dev). To run it locally, run `npm install` (which builds `dist/`), serve the repo folder with any static server, and open `/examples/browser/`. It draws the skeleton over the video (green joints are visible enough to count, orange ones aren't) and shows each leg joint's visibility and the live knee angles, so you can see why a rep did or didn't count. With a laptop webcam, stand about 2.5-3 m back so your ankles are in frame.
 
 ### Keypoints from anywhere else
 
@@ -142,6 +144,7 @@ npm install      # also builds dist/
 npm test         # node --test, no extra test runner
 npm run example  # a squat detector on synthetic keypoints
 npm run record-demo  # re-records docs/demo.gif (needs Chrome and ffmpeg)
+npm run demo:deploy  # publishes the browser demo as static assets on Cloudflare Workers
 ```
 
 Node 22.18 or newer runs the TypeScript sources and tests directly.

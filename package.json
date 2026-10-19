@@ -21,7 +21,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "example": "node examples/node/simulate.ts",
     "record-demo": "npm run build && node scripts/record-demo.mjs",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "demo:deploy": "npm run build && node scripts/stage-demo.mjs && npx wrangler@4 deploy --assets .demo --name pose-reps --compatibility-date 2026-10-01"
   },
   "keywords": [
     "mediapipe",
